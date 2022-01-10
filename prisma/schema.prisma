@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model facilities {
+  id                                                Int                                   @id @default(autoincrement())
+  cancellation_allowed_by_customer                  Boolean
+  cancellation_allowed_by_spothero_customer_service Boolean
+  cancellation_minutes                              Int
+  clearance_inches                                  Int
+  description                                       String                                @db.VarChar(128)
+  facility_type                                     String                                @db.VarChar(64)
+  always_open                                       Boolean
+  hours_of_operation_text                           String                                @db.VarChar(64)
+  navigation_tip                                    String                                @db.VarChar(64)
+  rating_average                                    Float
+  rating_count                                      Int
+  required_license_plate                            Boolean
+  required_phone_number                             Boolean
+  required_printout                                 Boolean
+  reservation_extension_enabled                     Boolean
+  slug                                              String                                @db.VarChar(64)
+  title                                             String                                @db.VarChar(128)
+  status                                            String                                @db.VarChar(64)
+  is_commuter_card_eligible                         Boolean
+  results                                           results[]
+  facility_addresses                                facility_addresses[]
+  facility_hours_of_operation_periods               facility_hours_of_operation_periods[]
+}
+
+model facility_addresses {
+  id                     Int                      @id @default(autoincrement())
+  facility_id            Int
+  city                   String                   @db.VarChar(64)
+  country                String                   @db.VarChar(2)
+  lat                    Float
+  long                   Float
+  postal_code            Int
+  state                  String                   @db.VarChar(2)
+  street_address         String                   @db.VarChar(64)
+  time_zone              String                   @db.VarChar(32)
+  facilities             facilities?              @relation(fields: [facility_id], references: [id])
+  facility_address_types facility_address_types[]
+}
+
+model facility_address_types {
+  id                  Int                 @id @default(autoincrement())
+  facility_address_id Int
+  type                String              @db.VarChar(64)
+  facility_addresses  facility_addresses? @relation(fields: [facility_address_id], references: [id])
+}
+
+model facility_hours_of_operation_periods {
+  id              Int         @id @default(autoincrement())
+  facility_id     Int
+  day_of_week     String      @db.VarChar(8)
+  end_time        DateTime    @db.Time
+  end_time_secs   Int
+  first_day       String      @db.VarChar(8)
+  hours_type      String      @db.VarChar(16)
+  last_day        String      @db.VarChar(8)
+  start_time      DateTime    @db.Time
+  start_time_secs Int
+  facilities      facilities? @relation(fields: [facility_id], references: [id])
+}
+
+model pull {
+  id         Int          @id @default(autoincrement())
+  lat        Float
+  long       Float
+  time_range time_range[]
+  results    results[]
+}
+
+model time_range {
+  id         Int      @id @default(autoincrement())
+  pull_id    Int
+  start_time DateTime
+  end_time   DateTime
+  pull       pull?    @relation(fields: [pull_id], references: [id])
+}
+
+model results {
+  id                 Int                  @id @default(autoincrement())
+  pull_id            Int
+  facility_id        Int
+  pull               pull?                @relation(fields: [pull_id], references: [id])
+  facilities         facilities?          @relation(fields: [facility_id], references: [id])
+  result_rate_quotes result_rate_quotes[]
+}
+
+model result_rate_quotes {
+  id               Int      @id @default(autoincrement())
+  results_id       Int
+  advertised_price Float
+  total_price      Float
+  results          results? @relation(fields: [results_id], references: [id])
+}
